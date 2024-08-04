@@ -15,6 +15,7 @@ let categoryData = {};
 // Evento para cargar los datos de categorías al iniciar la aplicación
 document.addEventListener('DOMContentLoaded', () => {
   loadCategoryData();
+  attachFormSubmitEvent();
 });
 
 // Cargar los datos de categorías desde un archivo JSON
@@ -38,6 +39,14 @@ function initializeApplication() {
   calculateTotalPayments();
   calculateCategorySummary();
   calculateMonthlyEvolution();
+}
+
+// Agrega el manejador de eventos al formulario para evitar su envío por defecto
+function attachFormSubmitEvent() {
+  document.getElementById('productForm').addEventListener('submit', function(event) {
+    event.preventDefault();  // Esto previene la recarga de la página
+    addProduct();
+  });
 }
 
 // Abrir el modal para agregar productos
@@ -81,6 +90,7 @@ function addProduct() {
 
     products.push(product);
     originalOrder.push(product);
+    console.log("Producto agregado:", product);
     displayProducts();
     clearForm();
     saveProductsToStorage();
@@ -459,7 +469,7 @@ function updateSortButtons() {
 
     if (currentSort.key) {
         const activeButton = document.querySelector(`.table-cell-header[onclick="sortProducts('${currentSort.key}')"]`);
-        activeButton.classList.add('active');
+        activeButton.classList add('active');
         if (currentSort.direction === -1) {
             activeButton.classList.add('desc');
         } else {
