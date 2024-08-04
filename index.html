@@ -110,37 +110,7 @@
         </div>
     </div>
 
-    <!-- Chart JS for charts-->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBagcdFx0gi_mlWMqP-lUvyWD__2micKqE",
-            authDomain: "instalment-manager.firebaseapp.com",
-            databaseURL: "https://instalment-manager-default-rtdb.firebaseio.com",
-            projectId: "instalment-manager",
-            storageBucket: "instalment-manager.appspot.com",
-            messagingSenderId: "24390919147",
-            appId: "1:24390919147:web:3e1273a7c3af10f232afae",
-            measurementId: "G-DX2Q8ZVKDD"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-
-        // Initialize Firestore
-        const db = getFirestore(app);
-
-        // Make db available to your script.js
-        window.db = db;
-    </script>
-
     <script src="./js/script.js"></script>
 </body>
 </html>

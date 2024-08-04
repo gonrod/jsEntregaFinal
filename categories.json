@@ -1,0 +1,30 @@
+{
+    "Cuentas Fijas": {
+      "icon": "💡",
+      "color": "#FF6384"
+    },
+    "Comida": {
+      "icon": "🍔",
+      "color": "#36A2EB"
+    },
+    "Entretenimiento": {
+      "icon": "🎉",
+      "color": "#FFCE56"
+    },
+    "Electrodomésticos": {
+      "icon": "🔌",
+      "color": "#4BC0C0"
+    },
+    "Ferretería": {
+      "icon": "🛠️",
+      "color": "#9966FF"
+    },
+    "Farmacia": {
+      "icon": "💊",
+      "color": "#FF9F40"
+    },
+    "Indulgencias": {
+      "icon": "🍰",
+      "color": "#8BC34A"
+  }
+  
