@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Función para cargar los datos de categorías de un archivo JSON
 function loadCategoryData() {
-  fetch('./categories.json')
+  fetch('categories.json')  // Ruta relativa ajustada para GitHub Pages
     .then(response => response.json())
     .then(data => {
       categoryData = data;
