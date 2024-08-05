@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    fetch('/categories.json')  // Ensure the path to categories.json is correct.
+    fetch('data/categories.json')  // Ensure the path to categories.json is correct.
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not good again: ' + response.statusText);
