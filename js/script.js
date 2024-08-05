@@ -1,68 +1,58 @@
-// Variables globales para almacenar los productos y el orden original de los mismos
 let products = [];
 let originalOrder = [];
-
-// Configuración de ordenación actual
 let currentSort = { key: null, direction: 1 };
+let chart = null; // Instance of Chart.js for debt chart
+let evoChart = null; // Instance of Chart.js for monthly evolution chart
 
-// Variables para las instancias de gráficos
-let chart = null;
-let evoChart = null;
-
-// Datos de categorías cargados desde JSON
-let categoryData = {};
-
-// Evento para cargar los datos de categorías al iniciar la aplicación
-document.addEventListener('DOMContentLoaded', () => {
-  loadCategoryData();
-  attachFormSubmitEvent();
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
 });
 
-// Cargar los datos de categorías desde un archivo JSON
-function loadCategoryData() {
-  fetch('categories.json')  // Asegurarse de que la ruta es relativa al lugar donde se aloja el proyecto
-    .then(response => response.json())
-    .then(data => {
-      categoryData = data;
-      initializeApplication(); // Inicializar la aplicación después de cargar los datos
-    })
-    .catch(error => {
-      console.error('Error al cargar los datos de categorías:', error);
-      initializeApplication(); // Continuar con la inicialización en caso de error
-    });
-}
-
-// Inicializar la aplicación cargando productos y configurando visualizaciones iniciales
-function initializeApplication() {
-  loadProductsFromStorage();
-  displayProducts();
-  calculateTotalPayments();
-  calculateCategorySummary();
-  calculateMonthlyEvolution();
-}
-
-// Agrega el manejador de eventos al formulario para evitar su envío por defecto
-function attachFormSubmitEvent() {
-  document.getElementById('productForm').addEventListener('submit', function(event) {
-    event.preventDefault();  // Esto previene la recarga de la página
-    addProduct();
-  });
-}
-
-// Abrir el modal para agregar productos
+// Function to open the modal
 function openModal() {
     document.getElementById('modalOverlay').style.display = 'flex';
     document.getElementById('productModal').style.display = 'block';
 }
 
-// Cerrar el modal de agregar productos y limpiar el formulario
+// Function to close the modal
 function closeModal() {
     document.getElementById('modalOverlay').style.display = 'none';
     document.getElementById('productModal').style.display = 'none';
     clearForm();
 }
 
-// Agregar un nuevo producto a la lista tras validar la entrada
+// Fetch category data from JSON
+async function fetchCategoryData() {
+    try {
+        const response = await fetch('./categories.json');
+        const data = await response.json();
+        categoryIcons = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, value.icon]));
+        categoryColors = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, value.color]));
+        loadCategoryOptions(); // Load categories into the modal dropdown once data is fetched
+    } catch (error) {
+        console.error("Failed to fetch categories data", error);
+    }
+}
+
+// Function to load category options into the dropdown
+function loadCategoryOptions() {
+    const categorySelect = document.getElementById('productCategory');
+    categorySelect.innerHTML = '<option value="">Seleccione una categoría</option>';
+    Object.keys(categoryIcons).forEach(category => {
+        categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
+    });
+}
+
+// Function to initialize the app and load category data
+function initializeApp() {
+    fetchCategoryData(); // Load category data on app start
+    loadProductsFromStorage();
+    displayProducts();
+    calculateTotalPayments();
+    calculateCategorySummary();
+    calculateMonthlyEvolution();
+}
+
 function addProduct() {
     const productName = document.getElementById('productName').value;
     const productPrice = parseFloat(document.getElementById('productPrice').value);
@@ -70,7 +60,6 @@ function addProduct() {
     const productCategory = document.getElementById('productCategory').value;
     const currentDate = new Date();
 
-    // Ajustar la fecha de finalización basada en las cuotas
     const endDate = new Date(currentDate);
     endDate.setMonth(endDate.getMonth() + productInstallments - 1);
 
@@ -84,415 +73,86 @@ function addProduct() {
         price: productPrice,
         installments: productInstallments,
         category: productCategory,
-        startDate: currentDate,
-        endDate: endDate
+        startDate: currentDate.toISOString(),
+        endDate: endDate.toISOString()
     };
 
     products.push(product);
     originalOrder.push(product);
-    console.log("Producto agregado:", product);
-    displayProducts();
-    clearForm();
-    saveProductsToStorage();
     closeModal();
+    displayProducts();
+    saveProductsToStorage();
     calculateTotalPayments();
     calculateCategorySummary();
     calculateMonthlyEvolution();
 }
 
-// Mostrar los productos en la interfaz de usuario
 function displayProducts() {
     const productList = document.getElementById('productList');
     productList.innerHTML = '';
 
     products.forEach((product, index) => {
-        const startDate = product.startDate ? new Date(product.startDate) : new Date();
-        const endDate = product.endDate ? new Date(product.endDate) : new Date(startDate);
-        const categoryIcon = categoryData[product.category] ? categoryData[product.category].icon : '?';
         const productItem = document.createElement('div');
-        productItem.className = 'table-row';
+        productItem.className = 'product-item';
         productItem.innerHTML = `
-            <div class="table-cell nam-cell">${categoryIcon} ${product.name}</div>
-            <div class="table-cell pri-cell">$${product.price.toFixed(2)}</div>
-            <div class="table-cell ins-cell">${product.installments}</div>
-            <div class="table-cell cat-cell">${product.category}</div>
-            <div class="table-cell sDa-cell">${startDate.toLocaleDateString()}</div>
-            <div class="table-cell eDa-cell">${endDate.toLocaleDateString()}</div>
-            <div class="table-cell acc-cell"><button onclick="removeProduct(${index})">&times;</button></div>
+            <span>${product.name}</span>
+            <span>$${product.price.toFixed(2)}</span>
+            <span>${product.installments} cuotas</span>
+            <span>${product.category}</span>
+            <button onclick="removeProduct(${index})">Remove</button>
         `;
         productList.appendChild(productItem);
     });
 }
 
-// Limpiar el formulario después de agregar o cancelar un producto
-function clearForm() {
-    document.getElementById('productName').value = '';
-    document.getElementById('productPrice').value = '';
-    document.getElementById('productCategory').value = '';
-    const checkedRadio = document.querySelector('input[name="productInstallments"]:checked');
-    if (checkedRadio) {
-        checkedRadio.checked = false;
-    }
-}
-
-// Eliminar un producto de la lista y actualizar el almacenamiento
-function removeProduct(index) {
-    products.splice(index, 1);
-    originalOrder.splice(index, 1);
-    displayProducts();
-    saveProductsToStorage();
-    calculateTotalPayments();
-    calculateCategorySummary();
-    calculateMonthlyEvolution();
-}
-
-// Calcular los pagos totales y mostrarlos mes a mes
 function calculateTotalPayments() {
-    const payments = {};
-    const productCount = {};
-    const productDetails = {};
-
-    // Iterar sobre cada producto para desglosar los pagos por mes
+    let totalPayments = 0;
     products.forEach(product => {
-        const monthlyPayment = product.price / product.installments;
-        let paymentDate = new Date(product.startDate);
-
-        for (let i = 0; i < product.installments; i++) {
-            paymentDate.setMonth(paymentDate.getMonth() + 1);
-            const paymentKey = `${paymentDate.getFullYear()}-${paymentDate.getMonth()}`;
-
-            if (!payments[paymentKey]) {
-                payments[paymentKey] = 0;
-                productCount[paymentKey] = 0;
-                productDetails[paymentKey] = [];
-            }
-
-            payments[paymentKey] += monthlyPayment;
-            productCount[paymentKey] += 1;
-            productDetails[paymentKey].push({ name: product.name, payment: monthlyPayment.toFixed(2), category: product.category, installment: i + 1, totalInstallments: product.installments });
-        }
+        totalPayments += product.price;
     });
-
-    // Mostrar los pagos mensuales en la interfaz
-    const totalPayments = document.getElementById('totalPayments');
-    totalPayments.innerHTML = '';
-    for (let paymentKey in payments) {
-        const [year, month] = paymentKey.split('-');
-        const paymentItem = document.createElement('div');
-        paymentItem.className = 'payment-item';
-        paymentItem.innerHTML = `
-            <div class="payment-item-header">
-                <div class="donut-chart-container">
-                    <canvas></canvas>
-                </div>
-                <div>
-                    <strong>${getMonthName(month)} ${year}:</strong><br> $${payments[paymentKey].toFixed(2)} &nbsp;(${productCount[paymentKey]} productos)
-                </div>
-            </div>
-            <div class="payment-details">
-                <div class="details-text"></div>
-            </div>
-        `;
-
-        // Detalle de pagos por categoría para cada mes
-        const paymentDetails = paymentItem.querySelector('.details-text');
-        const productsByCategory = groupBy(productDetails[paymentKey], 'category');
-        for (let category in productsByCategory) {
-            const categoryTotal = productsByCategory[category].reduce((total, detail) => total + parseFloat(detail.payment), 0).toFixed(2);
-            const categoryGroup = document.createElement('div');
-            categoryGroup.className = 'category-group';
-            categoryGroup.innerHTML = `
-                <div class="category-header">
-                    <span class="category-icon" style="background-color: ${getCategoryColor(category)}">${categoryData[category] ? categoryData[category].icon : '?'}</span>&nbsp;
-                    <span>${category}</span>:&nbsp;$${categoryTotal}</strong>
-                </div>
-            `;
-            productsByCategory[category].forEach(detail => {
-                categoryGroup.innerHTML += `<p class="product-item"><strong>${detail.name}:</strong> $${detail.payment} (${detail.installment}/${detail.totalInstallments})</p>`;
-            });
-            paymentDetails.appendChild(categoryGroup);
-        }
-
-        totalPayments.appendChild(paymentItem);
-
-        // Configurar la gráfica de dona para cada mes
-        const ctx = paymentItem.querySelector('canvas').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: productDetails[paymentKey].map(detail => detail.name),
-                datasets: [{
-                    data: productDetails[paymentKey].map(detail => parseFloat(detail.payment)),
-                    backgroundColor: productDetails[paymentKey].map(detail => getCategoryColor(detail.category)),
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-
-        console.log(`${getMonthName(month)} ${year}: $${payments[paymentKey].toFixed(2)} (${productCount[paymentKey]} productos)`);
-    }
+    const paymentsDisplay = document.getElementById('totalPayments');
+    paymentsDisplay.textContent = `Total Payments: $${totalPayments.toFixed(2)}`;
 }
 
-// Calcular y mostrar el resumen de deuda por categoría
 function calculateCategorySummary() {
-    const categorySummary = {};
-    let totalDebt = 0;
-
-    // Inicializar cada categoría con una deuda de cero
-    Object.keys(categoryData).forEach(category => {
-        categorySummary[category] = 0;
-    });
-
-    // Sumar la deuda total y por categoría
+    const summary = {};
     products.forEach(product => {
-        categorySummary[product.category] += product.price;
-        totalDebt += product.price;
+        if (!summary[product.category]) summary[product.category] = 0;
+        summary[product.category] += product.price;
     });
 
-    // Mostrar el resumen en la interfaz
-    const debtSummaryElement = document.getElementById('debtSummary');
-    debtSummaryElement.innerHTML = '';
-    for (let category in categorySummary) {
-        const percentage = totalDebt ? (categorySummary[category] / totalDebt * 100).toFixed(2) : '0.00';
-        const summaryItem = document.createElement('div');
-        summaryItem.className = 'debt-summary-item';
-        summaryItem.innerHTML = `
-            <span class="category-color" style="background-color: ${getCategoryColor(category)}">
-                <span class="category-icon">${categoryData[category] ? categoryData[category].icon : '?'}</span>
-            </span>
-            <span class="category-percent">${percentage}% </span>
-            <span class="category-name">${category}</span>
-            <span class="category-Amount" style="background-color:${getCategoryColor(category)}"><span>$${categorySummary[category].toFixed(2)}</span></span>
-            
-        `;
-        debtSummaryElement.appendChild(summaryItem);
-    }
-
-    updateDebtChart(categorySummary, totalDebt);
-}
-
-// Actualizar la gráfica de dona con el resumen de deuda
-function updateDebtChart(categorySummary, totalDebt) {
-    const ctx = document.getElementById('debtChart').getContext('2d');
-    const labels = Object.keys(categorySummary);
-    const data = Object.values(categorySummary);
-    const colors = labels.map(label => getCategoryColor(label));
-
-    if (chart) {
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Deuda por Categoría',
-                data: data,
-                backgroundColor: colors,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false // Desactivar la leyenda
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            return tooltipItem.label + ': $' + tooltipItem.raw.toFixed(2);
-                        }
-                    }
-                }
-            }
-        }
+    const summaryDisplay = document.getElementById('debtSummary');
+    summaryDisplay.innerHTML = '';
+    Object.keys(summary).forEach(category => {
+        const categoryEl = document.createElement('div');
+        categoryEl.innerHTML = `${category}: $${summary[category].toFixed(2)}`;
+        summaryDisplay.appendChild(categoryEl);
     });
-
-    // Actualizar el texto central con la deuda total
-    const chartCenterText = document.getElementById('chartCenterText');
-    chartCenterText.textContent = `$${totalDebt.toFixed(2)}`;
 }
 
-// Calcular y mostrar la evolución mensual de los pagos
 function calculateMonthlyEvolution() {
-    const monthlyData = {};
-    const categories = Object.keys(categoryData);
-    const currentDate = new Date();
-
-    // Preparar los datos mensuales por categoría para el próximo año
-    for (let i = 0; i < 12; i++) {
-        const paymentKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
-        monthlyData[paymentKey] = {};
-        categories.forEach(category => {
-            monthlyData[paymentKey][category] = 0;
-        });
-        currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-
-    // Distribuir los pagos de cada producto por su duración en cuotas
-    products.forEach(product => {
-        const monthlyPayment = product.price / product.installments;
-        let paymentDate = new Date(product.startDate);
-
-        for (let i = 0; i < product.installments; i++) {
-            const paymentKey = `${paymentDate.getFullYear()}-${paymentDate.getMonth()}`;
-            if (!monthlyData[paymentKey]) {
-                monthlyData[paymentKey] = {};
-                categories.forEach(category => {
-                    monthlyData[paymentKey][category] = 0;
-                });
-            }
-            monthlyData[paymentKey][product.category] += monthlyPayment;
-            paymentDate.setMonth(paymentDate.getMonth() + 1);
-        }
-    });
-
-    // Configurar y mostrar la gráfica de evolución mensual
-    const labels = Object.keys(monthlyData).sort();
-    const datasets = categories.map(category => ({
-        label: category,
-        data: labels.map(label => monthlyData[label][category]),
-        borderColor: getCategoryColor(category),
-        backgroundColor: getCategoryColor(category),
-        fill: false,
-        tension: 0.1
-    }));
-
-    const canvas = document.getElementById('monthlyEvoChart');
-    const ctx = canvas.getContext('2d');
-
-    if (evoChart) {
-        evoChart.destroy();
-    }
-
-    if (labels.length > 0 && datasets.some(dataset => dataset.data.some(value => value > 0))) {
-        evoChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels.map(label => {
-                    const [year, month] = label.split('-');
-                    return `${getMonthName(month)} ${year}`;
-                }),
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Mes'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Monto'
-                        },
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false,
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(tooltipItem) {
-                                return `${tooltipItem.dataset.label}: $${tooltipItem.raw.toFixed(2)}`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
+    // Implement calculation and display logic for monthly payment evolution
 }
 
-// Obtener el nombre del mes a partir de un número de mes
-function getMonthName(month) {
-    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    return monthNames[parseInt(month)];
-}
-
-// Agrupar elementos de un arreglo basado en una clave especificada
-function groupBy(array, key) {
-    return array.reduce((result, currentValue) => {
-        (result[currentValue[key]] = result[currentValue[key]] || []).push(currentValue);
-        return result;
-    }, {});
-}
-
-// Ordenar los productos basado en una clave especificada
-function sortProducts(key) {
-    if (currentSort.key === key) {
-        if (currentSort.direction === 1) {
-            currentSort.direction = -1;
-        } else if (currentSort.direction === -1) {
-            currentSort.key = null;
-            currentSort.direction = 1;
-            products = [...originalOrder];
-        }
-    } else {
-        currentSort.key = key;
-        currentSort.direction = 1;
-    }
-
-    if (currentSort.key) {
-        products.sort((a, b) => {
-            if (a[currentSort.key] < b[currentSort.key]) return -1 * currentSort.direction;
-            if (a[currentSort.key] > b[currentSort.key]) return 1 * currentSort.direction;
-            return 0;
-        });
-    }
-
-    updateSortButtons();
-    displayProducts();
-}
-
-// Actualizar los botones de ordenación para reflejar el estado actual de la ordenación
-function updateSortButtons() {
-    const buttons = document.querySelectorAll('.table-cell-header');
-    buttons.forEach(button => {
-        button.classList.remove('active', 'desc', 'asc');
-    });
-
-    if (currentSort.key) {
-        const activeButton = document.querySelector(`.table-cell-header[onclick="sortProducts('${currentSort.key}')"]`);
-        activeButton.classList add('active');
-        if (currentSort.direction === -1) {
-            activeButton.classList.add('desc');
-        } else {
-            activeButton.classList.add('asc');
-        }
-    }
-}
-
-// Guardar los productos en el almacenamiento local del navegador
 function saveProductsToStorage() {
     localStorage.setItem('products', JSON.stringify(products));
 }
 
-// Cargar los productos desde el almacenamiento local del navegador
 function loadProductsFromStorage() {
     const storedProducts = localStorage.getItem('products');
     if (storedProducts) {
         products = JSON.parse(storedProducts);
         originalOrder = [...products];
+        displayProducts();
     }
 }
 
-// Obtener el color asociado a una categoría basado en los datos cargados
-function getCategoryColor(category) {
-    return categoryData[category] ? categoryData[category].color : '#000'; // Color por defecto si no se encuentra
+function removeProduct(index) {
+    products.splice(index, 1);
+    originalOrder.splice(index, 1); // Maintain original order for sorting purposes
+    displayProducts();
+    saveProductsToStorage();
+    calculateTotalPayments();
+    calculateCategorySummary();
+    calculateMonthlyEvolution();
 }
