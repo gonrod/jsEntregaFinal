@@ -269,7 +269,7 @@ function calculateCategorySummary() {
 
 // Función para actualizar la gráfica de dona
 function updateDebtChart(categorySummary, totalDebt) {
-    const ctx = document.getElementById('debtChart').getContext('2d');
+    const ctx = document.getElementById('debtSummary').getContext('2d');
     const labels = Object.keys(categorySummary);
     const data = Object.values(categorySummary);
     const colors = labels.map(label => getCategoryColor(label));
