@@ -7,6 +7,16 @@ let evoChart = null; // Variable para la evolución del gráfico
 let categoryIcons = {};
 let categoryColors = {};
 
+const categoryDefaults = {
+    'Cuentas Fijas': { icon: '💡', color: '#FF6384' },
+    'Comida': { icon: '🍔', color: '#36A2EB' },
+    'Entretenimiento': { icon: '🎉', color: '#FFCE56' },
+    'Electrodomésticos': { icon: '🔌', color: '#4BC0C0' },
+    'Ferretería': { icon: '🛠️', color: '#9966FF' },
+    'Farmacia': { icon: '💊', color: '#FF9F40' },
+    'Indulgencias': { icon: '🍰', color: '#8BC34A' }
+};
+
 // Función para abrir el modal
 function openModal() {
     document.getElementById('modalOverlay').style.display = 'flex';
@@ -498,13 +508,13 @@ function initializeApp() {
             calculateMonthlyEvolution();
         })
         .catch(error => {
-            console.error('Failed to fetch categories:', error);
-            // Implement fallback logic here if necessary.
+            console.error('Error fetching categories:', error);
+            initializeCategories(categoryDefaults); // Usar default data si falla el fetch
+            alert('Could not load custom category settings, default settings applied.');
         });
 }
 
 function initializeCategories(data) {
-    // Assuming categoryIcons and categoryColors are global variables
     categoryIcons = {};
     categoryColors = {};
     for (const category in data) {
