@@ -85,6 +85,7 @@ function addProduct() {
     calculateTotalPayments();
     calculateCategorySummary();
     calculateMonthlyEvolution();
+    updateSortButtons();
 }
 
 function displayProducts() {
@@ -103,6 +104,7 @@ function displayProducts() {
         `;
         productList.appendChild(productItem);
     });
+    updateSortButtons();
 }
 
 function calculateTotalPayments() {
@@ -155,4 +157,31 @@ function removeProduct(index) {
     calculateTotalPayments();
     calculateCategorySummary();
     calculateMonthlyEvolution();
+}
+
+function updateSortButtons() {
+    document.querySelectorAll('.sort-button').forEach(button => {
+        button.addEventListener('click', function() {
+            sortProducts(this.dataset.sortkey);
+        });
+    });
+}
+
+function sortProducts(key) {
+    if (currentSort.key === key) {
+        currentSort.direction *= -1; // Toggle direction
+    } else {
+        currentSort.key = key;
+        currentSort.direction = 1; // Default to ascending
+    }
+
+    products.sort((a, b) => {
+        let valueA = a[key];
+        let valueB = b[key];
+        if (valueA < valueB) return -1 * currentSort.direction;
+        if (valueA > valueB) return 1 * currentSort.direction;
+        return 0;
+    });
+
+    displayProducts(); // Re-display products after sorting
 }
