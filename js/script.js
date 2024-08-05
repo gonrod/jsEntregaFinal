@@ -4,27 +4,8 @@ let currentSort = { key: null, direction: 1 };
 let chart = null; // Variable para almacenar la instancia de Chart.js
 let evoChart = null; // Variable para la evolución del gráfico
 
-// Iconos de categorías
-const categoryIcons = {
-    'Cuentas Fijas': '💡',
-    'Comida': '🍔',
-    'Entretenimiento': '🎉',
-    'Electrodomésticos': '🔌',
-    'Ferretería': '🛠️',
-    'Farmacia': '💊',
-    'Indulgencias': '🍰'
-};
-
-// Colores de categorías
-const categoryColors = {
-    'Cuentas Fijas': '#FF6384',
-    'Comida': '#36A2EB',
-    'Entretenimiento': '#FFCE56',
-    'Electrodomésticos': '#4BC0C0',
-    'Ferretería': '#9966FF',
-    'Farmacia': '#FF9F40',
-    'Indulgencias': '#8BC34A'
-};
+let categoryIcons = {};
+let categoryColors = {};
 
 // Función para abrir el modal
 function openModal() {
